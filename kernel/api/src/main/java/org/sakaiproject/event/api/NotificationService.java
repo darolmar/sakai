@@ -54,7 +54,12 @@ public interface NotificationService
 
 	/** Notification option value for optional notification. */
 	static final int NOTI_OPTIONAL = 2;
-
+		
+	/** Notification option value for group notification. */
+	static final int NOTI_GROUP = 3;		
+	/** Notification option value for site notification. */
+	static final int NOTI_SITE = 4;
+	
 	/** Notification option value for undefined notification. */
 	static final int PREF_NONE = 0;
 

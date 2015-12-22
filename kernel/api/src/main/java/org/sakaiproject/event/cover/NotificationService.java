@@ -70,7 +70,11 @@ public class NotificationService
 	public static int NOTI_REQUIRED = org.sakaiproject.event.api.NotificationService.NOTI_REQUIRED;
 
 	public static int NOTI_OPTIONAL = org.sakaiproject.event.api.NotificationService.NOTI_OPTIONAL;
-
+	
+	public static int NOTI_GROUP = org.sakaiproject.event.api.NotificationService.NOTI_GROUP;
+	
+	public static int NOTI_SITE = org.sakaiproject.event.api.NotificationService.NOTI_SITE;
+	
 	public static int PREF_NONE = org.sakaiproject.event.api.NotificationService.PREF_NONE;
 
 	public static int PREF_IGNORE = org.sakaiproject.event.api.NotificationService.PREF_IGNORE;

@@ -475,13 +475,18 @@ public class ResourcesAction
 	
 	public static final String DROPBOX_NOTIFICATIONS_PROPERTY = "dropbox_notifications_property";
 	public static final String DROPBOX_NOTIFICATIONS_PARAMETER_NAME = "dropbox_notification";
+
+	public static final String DROPBOX_NOTIFICATIONS_SECTIONS_PROPERTY = "dropbox_notifications_sections_property";
+	public static final String DROPBOX_NOTIFICATIONS_SECTIONS_PARAMETER_NAME = "dropbox_notification_sections";	
 	
 	public static final String DROPBOX_NOTIFICATIONS_NONE = "dropbox-emails-none";
 	public static final String DROPBOX_NOTIFICATIONS_ALLOW = "dropbox-emails-allowed";
 	public static final String DROPBOX_NOTIFICATIONS_ALWAYS = "dropbox-emails-always";
+	public static final String DROPBOX_NOTIFICATIONS_SITE = "dropbox-emails-instructor-site";
+	public static final String DROPBOX_NOTIFICATIONS_GROUP = "dropbox-emails-instructor-group";		
 	
 	public static final String DROPBOX_NOTIFICATIONS_DEFAULT_VALUE = DROPBOX_NOTIFICATIONS_NONE;
-
+	public static final String DROPBOX_NOTIFICATIONS_SECTIONS_DEFAULT_VALUE = DROPBOX_NOTIFICATIONS_SITE;
 	/** The default number of members for a collection at which this tool should refuse to expand the collection. Used only if value can't be read from config service. */
 	protected static final int EXPANDABLE_FOLDER_SIZE_LIMIT = 256;
 
@@ -1258,7 +1263,15 @@ protected static final String PARAM_PAGESIZE = "collections_per_page";
 					Entry<String, String> entry = mapIter.next(); 	 
 					resourceProperties.addProperty(entry.getKey(), entry.getValue());
 				}
-				
+				if(notification == NotificationService.NOTI_SITE){
+					resourceProperties.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_GROUP, "false");
+					resourceProperties.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_SITE, "true");							
+					notification = NotificationService.NOTI_REQUIRED;
+				}else if(notification == NotificationService.NOTI_GROUP){
+					resourceProperties.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_GROUP, "true");
+					resourceProperties.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_SITE, "false");							
+					notification = NotificationService.NOTI_REQUIRED;
+				}					
 //				if(MIME_TYPE_DOCUMENT_HTML.equals(fp.getRevisedMimeType()) || MIME_TYPE_DOCUMENT_PLAINTEXT.equals(fp.getRevisedMimeType()))
 //				{
 //					resourceProperties.addProperty(ResourceProperties.PROP_CONTENT_ENCODING, UTF_8_ENCODING);
@@ -5079,10 +5092,14 @@ protected static final String PARAM_PAGESIZE = "collections_per_page";
 		context.put("title", trb.getFormattedMessage("title.dropbox.options", args));
 
 		String dropboxNotifications = getDropboxNotificationsProperty();
+		String dropboxNotificationsSections = getDropboxNotificationsSectionsProperty();
 		context.put("value_dropbox_instructor_notifications", dropboxNotifications);
+		context.put("value_dropbox_instructor_notifications_sections", dropboxNotificationsSections);
 		context.put("value_dropbox_instructor_notifications_none", DROPBOX_NOTIFICATIONS_NONE);
 		context.put("value_dropbox_instructor_notifications_allow", DROPBOX_NOTIFICATIONS_ALLOW);
 		context.put("value_dropbox_instructor_notifications_always", DROPBOX_NOTIFICATIONS_ALWAYS);
+		context.put("value_dropbox_instructor_notifications_site", DROPBOX_NOTIFICATIONS_SITE);
+		context.put("value_dropbox_instructor_notifications_groups", DROPBOX_NOTIFICATIONS_GROUP);		
 		context.put("name_dropbox_instructor_notifications", DROPBOX_NOTIFICATIONS_PARAMETER_NAME);
 		
 		return TEMPLATE_DROPBOX_OPTIONS;
@@ -5103,7 +5120,16 @@ protected static final String PARAM_PAGESIZE = "collections_per_page";
 
 		return dropboxNotifications;
 	}
-	
+	protected String getDropboxNotificationsSectionsProperty(){
+		Placement placement = ToolManager.getCurrentPlacement();
+		Properties props = placement.getPlacementConfig();
+		String dropboxNotifications = props.getProperty(DROPBOX_NOTIFICATIONS_SECTIONS_PROPERTY);
+		if(dropboxNotifications == null){
+			dropboxNotifications = DROPBOX_NOTIFICATIONS_SECTIONS_DEFAULT_VALUE;
+		}
+		logger.debug(this + ".getDropboxNotificationsSectionsProperty() dropboxNotifications == " + dropboxNotifications);
+		return dropboxNotifications;
+	}	
 	/**
 	 * Handle a request to set options.
 	 */
@@ -5145,10 +5171,14 @@ protected static final String PARAM_PAGESIZE = "collections_per_page";
 		{
 			dropboxNotifications = DROPBOX_NOTIFICATIONS_DEFAULT_VALUE;
 		}
-
+		String dropboxNotificationsSections = params.getString(DROPBOX_NOTIFICATIONS_SECTIONS_PARAMETER_NAME);
+		if(dropboxNotificationsSections == null){
+			dropboxNotificationsSections = DROPBOX_NOTIFICATIONS_SECTIONS_DEFAULT_VALUE;
+		}
 		Placement placement = ToolManager.getCurrentPlacement();
 		Properties props = placement.getPlacementConfig();
 		props.setProperty(DROPBOX_NOTIFICATIONS_PROPERTY, dropboxNotifications);
+		props.setProperty(DROPBOX_NOTIFICATIONS_SECTIONS_PROPERTY, dropboxNotificationsSections);
 		placement.save();
 		
 		state.setAttribute(STATE_MODE, MODE_LIST);
@@ -6336,6 +6366,16 @@ protected static final String PARAM_PAGESIZE = "collections_per_page";
 			   				}
 						}
 					}
+					String notifyDropboxSections = getDropboxNotificationsSectionsProperty();
+					if(DROPBOX_NOTIFICATIONS_SITE.equals(notifyDropboxSections)){
+						resourceProperties.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_GROUP, "false");
+						resourceProperties.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_SITE, "true");							
+						noti = NotificationService.NOTI_REQUIRED;
+					}else if(DROPBOX_NOTIFICATIONS_GROUP.equals(notifyDropboxSections)){
+						resourceProperties.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_GROUP, "true");
+						resourceProperties.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_SITE, "false");							
+						noti = NotificationService.NOTI_REQUIRED;
+					}						
 					logger.debug(this + ".doCompleteCreateWizard() noti == " + noti);
 				}
 				else
@@ -7592,6 +7632,12 @@ protected static final String PARAM_PAGESIZE = "collections_per_page";
 		   					noti = NotificationService.NOTI_OPTIONAL;
 		   				}
 					}
+					String notifyDropboxSections = getDropboxNotificationsSectionsProperty();
+					if(DROPBOX_NOTIFICATIONS_SITE.equals(notifyDropboxSections)){
+						noti = NotificationService.NOTI_REQUIRED;
+					}else if(DROPBOX_NOTIFICATIONS_GROUP.equals(notifyDropboxSections)){
+					noti = NotificationService.NOTI_REQUIRED;
+					}						
 				}
 				logger.debug(this + ".doReviseProperties() noti == " + noti);
 			}
@@ -8312,7 +8358,16 @@ protected static final String PARAM_PAGESIZE = "collections_per_page";
 			{
 				notification = ((ListItem) obj).getNotification();
 			}
-			
+			String notifyDropboxSections = getDropboxNotificationsSectionsProperty();
+			if(DROPBOX_NOTIFICATIONS_SITE.equals(notifyDropboxSections)){
+				props.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_GROUP, "false");
+				props.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_SITE, "true");							
+				notification = NotificationService.NOTI_REQUIRED;
+			}else if(DROPBOX_NOTIFICATIONS_GROUP.equals(notifyDropboxSections)){
+				props.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_GROUP, "true");
+				props.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_SITE, "false");							
+				notification = NotificationService.NOTI_REQUIRED;
+			}				
 			// update mimetype
 			edit.setContentType(pipe.getRevisedMimeType());
 			ContentHostingService.commitResource(edit, notification);
@@ -9292,6 +9347,15 @@ protected static final String PARAM_PAGESIZE = "collections_per_page";
 				{ 	 
 					Entry<String, String> entry = mapIter.next();
 					resourceProperties.addProperty(entry.getKey(), entry.getValue());
+				}
+				if(notification == NotificationService.NOTI_SITE){
+					resourceProperties.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_GROUP, "false");
+					resourceProperties.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_SITE, "true");							
+					notification = NotificationService.NOTI_REQUIRED;
+				}else if(notification == NotificationService.NOTI_GROUP){
+					resourceProperties.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_GROUP, "true");
+					resourceProperties.addProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_SITE, "false");							
+					notification = NotificationService.NOTI_REQUIRED;
 				}
 				try
 				{

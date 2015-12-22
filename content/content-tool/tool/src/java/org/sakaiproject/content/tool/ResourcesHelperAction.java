@@ -1405,7 +1405,16 @@ public class ResourcesHelperAction extends VelocityPortletPaneledAction
 
 		return dropboxNotifications;
 	}
-
+	protected String getDropboxNotificationsSectionsProperty(){
+		Placement placement = ToolManager.getCurrentPlacement();
+		Properties props = placement.getPlacementConfig();
+		String dropboxNotifications = props.getProperty(ResourcesAction.DROPBOX_NOTIFICATIONS_SECTIONS_PROPERTY);
+		if(dropboxNotifications == null){
+			dropboxNotifications = ResourcesAction.DROPBOX_NOTIFICATIONS_SECTIONS_DEFAULT_VALUE;
+		}
+		logger.debug(this + ".getDropboxNotificationsSectionsProperty() dropboxNotifications == " + dropboxNotifications);	 
+		return dropboxNotifications;
+	}
 	/**
 	 * @param params
 	 * @param newFile
@@ -1442,8 +1451,14 @@ public class ResourcesHelperAction extends VelocityPortletPaneledAction
 	   					noti = NotificationService.NOTI_OPTIONAL;
 	   				}
 				}
+				String notifyDropboxSections = getDropboxNotificationsSectionsProperty();
+				if(ResourcesAction.DROPBOX_NOTIFICATIONS_SITE.equals(notifyDropboxSections)){
+					noti = NotificationService.NOTI_SITE;
+				}else if(ResourcesAction.DROPBOX_NOTIFICATIONS_GROUP.equals(notifyDropboxSections)){
+					noti = NotificationService.NOTI_GROUP;
+				}					
 			}
-			logger.debug(this + ".doAddUrls() noti == " + noti);
+			logger.debug(this + ".determineNotificationPriority() noti == " + noti);
 		}
 		else
 		{

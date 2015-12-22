@@ -175,6 +175,12 @@ public interface ResourceProperties extends Serializable
 	/** Property name on a ContentEntity indicating the ResourceType that defines its properties. */
 	static final String PROP_RESOURCE_TYPE = "SAKAI:resource_type";
 	
+	/** Property for student select type of notification. Notify to TA's of groups */
+	static final String PROP_ADD_RESOURCE_NOTIFICATION_GROUP = "prop_add_resource_notification_group";
+	 	
+	/** Property for student select type of notification. Notify to all instructors */
+	static final String PROP_ADD_RESOURCE_NOTIFICATION_SITE = "prop_add_resource_notification_site";
+			
 	/** Property name on a ContentEntity indicating if we should add HTML header/footer.*/
 	static final String PROP_ADD_HTML = "SAKAI:add_html";
 	

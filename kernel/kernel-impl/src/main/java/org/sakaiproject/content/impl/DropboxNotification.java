@@ -45,6 +45,7 @@ import org.sakaiproject.event.api.NotificationAction;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.site.api.Site;
+import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
@@ -236,21 +237,10 @@ public class DropboxNotification extends EmailNotification
 	 */
 	protected List getRecipients(Event event) 
 	{
-		List recipients = new ArrayList();
+		List<User> recipients = new ArrayList<User>();
 		
 		String resourceRef = event.getResource();
 		Reference ref = entityManager.newReference(resourceRef);
-        String siteId = (getSite() != null) ? getSite() : ref.getContext();
-
-        Site site;
-        // get a site 
-        try {
-			site = siteService.getSite(siteId);
-        }
-        catch (IdUnusedException e) {
-			logger.warn("Could not getSite for " + siteId + " not returning any recipients.");
-            return recipients;
-        }
 		
 		ResourceProperties props = ref.getProperties();
 		String modifiedBy = props.getProperty(ResourceProperties.PROP_MODIFIED_BY);
@@ -261,15 +251,35 @@ public class DropboxNotification extends EmailNotification
 			String dropboxOwnerId = parts[4];
 			if(modifiedBy != null && modifiedBy.equals(dropboxOwnerId))
 			{
-				// notify instructor(s)
-				StringBuilder buf = new StringBuilder();
-				buf.append("/content/group-user/"); 
-				buf.append(parts[3]); 
-				buf.append("/"); 
-				String siteDropbox = buf.toString();
-
-				recipients.addAll(securityService.unlockUsers(contentHostingService.AUTH_DROPBOX_MAINTAIN, siteDropbox));
-                refineToSiteMembers(recipients, site);
+				if ("true".equals(props.getProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_GROUP))){
+					// get groups of student and then TA of that groups
+					Collection<Group> groups = null;
+					Collection<User> instructors = new ArrayList<User>();
+					try{
+						Site site = siteService.getSite(ref.getContext());
+						groups = site.getGroupsWithMember(dropboxOwnerId);
+						for (Group group : groups) {
+							Set<String> roleStrings = group.getRolesIsAllowed("section.role.ta");
+							String roleTaString = null;
+							if(roleStrings.size() >= 1) {
+								roleTaString = (String)roleStrings.iterator().next();
+							}
+							Collection<String> members = group.getUsersHasRole(roleTaString);
+							instructors.addAll(userDirectoryService.getUsers(members));
+						}
+					}catch (Exception ignore){
+						logger.warn("Exception: " + ignore.getMessage());
+					}
+					recipients.addAll(instructors);
+				}else if ("true".equals(props.getProperty(ResourceProperties.PROP_ADD_RESOURCE_NOTIFICATION_SITE))){
+					// notify instructor(s) of site
+					StringBuilder buf = new StringBuilder();
+					buf.append("/content/group-user/"); 
+					buf.append(parts[3]); 
+					buf.append("/"); 
+					String siteDropbox = buf.toString();
+					recipients.addAll( securityService.unlockUsers(ContentHostingService.AUTH_DROPBOX_MAINTAIN, siteDropbox) );
+				}
 			}
 			else
 			{
