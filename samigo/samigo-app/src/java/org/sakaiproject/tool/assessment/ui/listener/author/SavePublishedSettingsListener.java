@@ -447,7 +447,8 @@ implements ActionListener
 		else {
 			control.setRetractDate(assessmentSettings.getRetractDate());
 		}
-
+		// set released to
+		control.setReleaseTo(assessmentSettings.getFirstTargetSelected());
 		
 		// set Assessment Orgainzation
 		if (assessmentSettings.getItemNavigation()!=null ) {

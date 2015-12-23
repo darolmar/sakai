@@ -201,7 +201,7 @@
   <!-- *** RELEASED TO *** -->
   <h:panelGroup>
     <h:outputText value="#{assessmentSettingsMessages.released_to} " />
-    <h:selectOneMenu id="releaseTo" disabled="true" value="#{publishedSettings.firstTargetSelected}" >
+    <h:selectOneMenu id="releaseTo" disabled="false" value="#{publishedSettings.firstTargetSelected}" >
       <f:selectItems value="#{assessmentSettings.publishingTargets}" />
     </h:selectOneMenu>
   </h:panelGroup>
